@@ -94,7 +94,11 @@
       <details class="linefix">
         <summary>Corrigir só uma frase (emergência)</summary>
         <div class="row col">
-          <span class="lab" id="lfLabel">Frase atual</span>
+          <label class="lab" for="lfSel">Frase a corrigir</label>
+          <select id="lfSel"></select>
+          <button type="button" id="lfNow" class="tog nowbtn">Começa agora <kbd>M</kbd></button>
+          <p class="hint">Escolha a frase, dê play um pouco antes e toque em <b>Começa agora</b> no instante em que o cantor começa a frase. Depois, a seleção passa sozinha para a frase seguinte. Para um ajuste fino, use os botões abaixo.</p>
+          <span class="lab" id="lfLabel" hidden></span>
           <div class="stepper" role="group" aria-label="Ajuste da frase">
             <button type="button" data-lf="-500">−0,5</button><button type="button" data-lf="-100">−0,1</button>
             <output id="lfVal">±0,0 s</output>
@@ -127,6 +131,7 @@
           <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>mais rápido / mais lento</dd>
           <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>ajuste geral ±0,1 s</dd>
           <dt><kbd>{</kbd> <kbd>}</kbd></dt><dd>ajuste geral ±0,5 s</dd>
+          <dt><kbd>M</kbd></dt><dd>marcar agora o início da frase escolhida em “Corrigir só uma frase”</dd>
           <dt><kbd>Esc</kbd></dt><dd>cancelar a escolha de trecho</dd>
         </dl>
       </details>
@@ -144,7 +149,7 @@
   <form id="songForm" method="dialog">
     <h2 id="sdTitle">Adicionar música</h2>
     <label class="field"><span>Link do YouTube</span>
-      <input id="fUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" required>
+      <input id="fUrl" type="text" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" required>
     </label>
     <div class="field">
       <span id="fJsonLabel">Arquivo JSON da letra</span>

@@ -360,6 +360,7 @@ function renderList() {
     return `<li data-i="${i}"${adj(i) ? ' class="adj"' : ''}><span class="t">${fmtClock(lineVideoMs(i))}</span><div><p class="en" lang="en">${en}</p>${pron}${pt}</div></li>`;
   }).join('');
   S.liEls = $$('#lyrics li');
+  fillLineSelect();
   markList(true);
 }
 function markList(force) {
@@ -516,9 +517,30 @@ function nudgeOffset(ms) {
   toast('Ajuste geral: ' + fmtSec(S.meta.offsetMs));
 }
 function fixTarget() {
+  const v = +$('#lfSel').value;
+  if (v >= 0) return v;                       // frase escolhida na lista
   if (S.fixI == null || now() - S.fixT > 4000) S.fixI = S.cur;
   S.fixT = now();
   return S.fixI;
+}
+function markLineNow() {
+  if (!P.ready) return;
+  let i = +$('#lfSel').value;
+  if (!(i >= 0)) { toast('Primeiro escolha, em “Frase a corrigir”, qual frase vai começar.'); $('.linefix').open = true; $('#lfSel').focus(); return; }
+  const vms = videoTime() * 1000;
+  const m = S.meta.lineAdj || (S.meta.lineAdj = {});
+  const v = Math.round(S.lines[i].start - off() - vms);   // faz a frase começar exatamente agora
+  if (v) m[i] = v; else delete m[i];
+  saveIndex(true); renderList(); S.cur = -2;
+  toast(`Frase ${i + 1} agora começa em ${(vms / 1000).toFixed(1).replace('.', ',')} s do vídeo`);
+  if (i + 1 < S.lines.length) $('#lfSel').value = String(i + 1);
+  renderSync();
+}
+function fillLineSelect() {
+  const sel = $('#lfSel'), keep = sel.value;
+  sel.innerHTML = '<option value="-1">Acompanhar a frase que está tocando</option>' + S.lines.map((L, i) =>
+    `<option value="${i}">${i + 1}. ${esc(L.text.length > 42 ? L.text.slice(0, 42) + '…' : L.text)}${adj(i) ? ' •' : ''}</option>`).join('');
+  sel.value = keep && +keep < S.lines.length ? keep : '-1';
 }
 function nudgeLine(ms) {
   const i = fixTarget(); if (i < 0) { toast('Toque play e espere a frase aparecer.'); return; }
@@ -529,7 +551,8 @@ function nudgeLine(ms) {
 }
 function renderSync() {
   $('#offVal').textContent = fmtSec(off());
-  const i = S.fixI != null && now() - S.fixT < 4000 ? S.fixI : S.cur;
+  const sv = +$('#lfSel').value;
+  const i = sv >= 0 ? sv : S.fixI != null && now() - S.fixT < 4000 ? S.fixI : S.cur;
   $('#lfLabel').textContent = i >= 0 ? `Frase ${i + 1}: “${S.lines[i].text.slice(0, 48)}${S.lines[i].text.length > 48 ? '…' : ''}”` : 'Nenhuma frase tocando agora';
   $('#lfVal').textContent = fmtSec(i >= 0 ? adj(i) : 0);
   const n = Object.keys(S.meta.lineAdj || {}).length;
@@ -572,6 +595,7 @@ async function openSong(id) {
   document.title = (meta.title || 'Música') + ' · English Music Lab';
   $('#gapSel').value = String(meta.gapS || 0);
   $('#playerMsg').hidden = true; $('#durNote').hidden = true;
+  $('#lfSel').innerHTML = '';
   renderList(); renderStage(); renderSync(); renderLoopStatus(); renderSpeeds(); updatePlayBtn();
   window.scrollTo(0, 0);
   await ensurePlayer(meta.videoId);
@@ -904,6 +928,8 @@ function bind() {
   $('#offReset').addEventListener('click', () => { S.meta.offsetMs = 0; saveIndex(true); renderSync(); renderList(); S.cur = -2; });
   $$('[data-lf]').forEach(b => b.addEventListener('click', () => nudgeLine(+b.dataset.lf)));
   $('#lfReset').addEventListener('click', () => { const i = fixTarget(); if (i >= 0 && S.meta.lineAdj) { delete S.meta.lineAdj[i]; saveIndex(true); renderSync(); renderList(); S.cur = -2; } });
+  $('#lfSel').addEventListener('change', e => { renderSync(); e.target.blur(); });
+  $('#lfNow').addEventListener('click', markLineNow);
   $('#adjClear').addEventListener('click', () => { S.meta.lineAdj = {}; saveIndex(true); renderSync(); renderList(); S.cur = -2; toast('Correções por frase removidas'); });
   $('#lyrics').addEventListener('click', e => {
     const li = e.target.closest('li[data-i]'); if (!li) return;
@@ -944,6 +970,7 @@ function bind() {
     else if (k === 'l' || k === 'L') toggleLoopLine();
     else if (k === 't' || k === 'T') toggleRange();
     else if (k === 'r' || k === 'R') moveTo(Math.max(0, S.cur));
+    else if (k === 'm' || k === 'M') markLineNow();
     else if (k === '[') nudgeOffset(-100);
     else if (k === ']') nudgeOffset(100);
     else if (k === '{') nudgeOffset(-500);
