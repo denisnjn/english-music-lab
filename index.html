@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>English Music Lab</title>
+<meta name="theme-color" content="#0e1116">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Music Lab">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230e1116'/%3E%3Crect x='6' y='12' width='4' height='8' rx='2' fill='%235ab0ff'/%3E%3Crect x='12' y='7' width='4' height='18' rx='2' fill='%23ffa24c'/%3E%3Crect x='18' y='10' width='4' height='12' rx='2' fill='%235ab0ff'/%3E%3Crect x='24' y='13' width='3' height='6' rx='1.5' fill='%23ffa24c'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>window.YTP = new Promise(function (r) { window.onYouTubeIframeAPIReady = r; });</script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#" aria-label="Biblioteca">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="12" width="4" height="8" rx="2" class="b0"/><rect x="11" y="6" width="4" height="20" rx="2" class="b1"/><rect x="17" y="9" width="4" height="14" rx="2" class="b0"/><rect x="23" y="13" width="4" height="6" rx="2" class="b1"/></svg>
+    <span>English Music Lab</span>
+  </a>
+  <nav class="top-actions">
+    <button id="syncBtn" class="chip" type="button" title="Sincronização entre aparelhos"><span class="dot"></span><span id="syncLabel">Só neste aparelho</span></button>
+    <button id="addBtn" class="btn primary" type="button">+ Adicionar música</button>
+  </nav>
+</header>
+
+<!-- ============ BIBLIOTECA ============ -->
+<main id="libraryView" class="view">
+  <div class="lib-head">
+    <h1>Biblioteca</h1>
+    <input id="search" type="search" placeholder="Buscar por música ou artista" autocomplete="off">
+  </div>
+  <div id="libGrid" class="lib-grid"></div>
+  <div id="libEmpty" class="empty" hidden>
+    <h2>Sua biblioteca está vazia</h2>
+    <p>Adicione a primeira música: cole o link do YouTube e escolha o arquivo JSON com a letra.</p>
+    <button class="btn primary" type="button" data-act="add">+ Adicionar música</button>
+  </div>
+</main>
+
+<!-- ============ ESTUDO ============ -->
+<main id="songView" class="view" hidden>
+  <section class="left">
+    <div class="song-title-row">
+      <button class="btn ghost small" type="button" data-act="back" aria-label="Voltar à biblioteca">← Biblioteca</button>
+      <div class="st"><h2 id="songTitle"></h2><p id="songArtist"></p></div>
+      <button id="editSongBtn" class="btn ghost small" type="button">Editar</button>
+    </div>
+
+    <div class="player-wrap"><div class="player-box"><div id="yt"></div></div><div id="playerMsg" class="player-msg" hidden></div></div>
+
+    <div class="transport">
+      <button id="prevBtn" class="tbtn" type="button" aria-label="Frase anterior" title="Frase anterior (←)"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button id="playBtn" class="tbtn big" type="button" aria-label="Tocar/pausar" title="Tocar/pausar (espaço)"><svg viewBox="0 0 24 24"><path id="playIcon" d="M7 4v16l13-8z"/></svg></button>
+      <button id="nextBtn" class="tbtn" type="button" aria-label="Próxima frase" title="Próxima frase (→)"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+      <span id="timeLbl" class="time">0:00</span>
+    </div>
+
+    <div class="panel">
+      <h3>Estudo</h3>
+      <div class="row wrap">
+        <button id="loopLineBtn" class="tog" type="button" aria-pressed="false">Repetir frase <kbd>L</kbd></button>
+        <button id="loopRangeBtn" class="tog" type="button" aria-pressed="false">Loop de trecho <kbd>T</kbd></button>
+      </div>
+      <div class="row">
+        <label for="gapSel">Pausa entre repetições</label>
+        <select id="gapSel">
+          <option value="0">sem pausa</option><option value="1">1 s</option><option value="2">2 s</option>
+          <option value="3">3 s</option><option value="5">5 s</option><option value="8">8 s</option>
+        </select>
+      </div>
+      <p id="loopStatus" class="status">Loop desligado</p>
+      <div class="row col">
+        <span class="lab">Velocidade <small>(a voz mantém o tom)</small></span>
+        <div id="speeds" class="seg" role="group" aria-label="Velocidade"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Sincronização</h3>
+      <p id="durNote" class="note-warn" hidden></p>
+      <div class="row col">
+        <span class="lab">Ajuste geral desta música</span>
+        <div class="stepper" role="group" aria-label="Ajuste geral">
+          <button type="button" data-off="-500">−0,5</button><button type="button" data-off="-100">−0,1</button>
+          <output id="offVal">±0,0 s</output>
+          <button type="button" data-off="100">+0,1</button><button type="button" data-off="500">+0,5</button>
+          <button type="button" id="offReset" class="mini">zerar</button>
+        </div>
+        <p class="hint">Letra <b>atrasada</b> em relação à voz → toque em <b>+</b>. Letra <b>adiantada</b> → <b>−</b>. Atalhos: <kbd>[</kbd> <kbd>]</kbd> (0,1 s) e <kbd>{</kbd> <kbd>}</kbd> (0,5 s).</p>
+      </div>
+      <details class="linefix">
+        <summary>Corrigir só uma frase (emergência)</summary>
+        <div class="row col">
+          <span class="lab" id="lfLabel">Frase atual</span>
+          <div class="stepper" role="group" aria-label="Ajuste da frase">
+            <button type="button" data-lf="-500">−0,5</button><button type="button" data-lf="-100">−0,1</button>
+            <output id="lfVal">±0,0 s</output>
+            <button type="button" data-lf="100">+0,1</button><button type="button" data-lf="500">+0,5</button>
+            <button type="button" id="lfReset" class="mini">zerar</button>
+          </div>
+          <p class="hint">Desloca apenas a frase indicada (com as palavras e os blocos dela). <span id="adjCount"></span> <button type="button" id="adjClear" class="linkbtn" hidden>Limpar todas as correções</button></p>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <h3>Exibição</h3>
+      <div class="row wrap">
+        <div class="seg" role="group" aria-label="Tamanho do texto">
+          <button type="button" id="fsDown" aria-label="Diminuir texto">A−</button>
+          <button type="button" id="fsUp" aria-label="Aumentar texto">A+</button>
+        </div>
+        <button id="togPron" class="tog" type="button" aria-pressed="true">Pronúncia</button>
+        <button id="togPt" class="tog" type="button" aria-pressed="true">Tradução</button>
+      </div>
+      <details class="keys">
+        <summary>Atalhos de teclado</summary>
+        <dl>
+          <dt><kbd>espaço</kbd></dt><dd>tocar / pausar</dd>
+          <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>frase anterior / próxima</dd>
+          <dt><kbd>R</kbd></dt><dd>recomeçar a frase atual</dd>
+          <dt><kbd>L</kbd></dt><dd>repetir a frase atual em loop</dd>
+          <dt><kbd>T</kbd></dt><dd>loop de trecho (escolha a 1ª e a última frase)</dd>
+          <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>mais rápido / mais lento</dd>
+          <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>ajuste geral ±0,1 s</dd>
+          <dt><kbd>{</kbd> <kbd>}</kbd></dt><dd>ajuste geral ±0,5 s</dd>
+          <dt><kbd>Esc</kbd></dt><dd>cancelar a escolha de trecho</dd>
+        </dl>
+      </details>
+    </div>
+  </section>
+
+  <section class="right">
+    <div id="stage" class="stage" aria-live="off"></div>
+    <ol id="lyrics" class="lyrics"></ol>
+  </section>
+</main>
+
+<!-- ============ DIALOG: MÚSICA ============ -->
+<dialog id="songDialog">
+  <form id="songForm" method="dialog">
+    <h2 id="sdTitle">Adicionar música</h2>
+    <label class="field"><span>Link do YouTube</span>
+      <input id="fUrl" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" required>
+    </label>
+    <div class="field">
+      <span id="fJsonLabel">Arquivo JSON da letra</span>
+      <label class="filepick"><input id="fFile" type="file" accept=".json,application/json,text/plain"><span id="fFileName">Escolher arquivo…</span></label>
+      <details class="paste"><summary>ou colar o conteúdo do JSON</summary><textarea id="fPaste" rows="6" spellcheck="false" placeholder='{ "metadata": { … }, "lines": [ … ] }'></textarea></details>
+      <div id="fInfo" class="finfo" hidden></div>
+    </div>
+    <div class="two">
+      <label class="field"><span>Título</span><input id="fTitle" type="text" autocomplete="off"></label>
+      <label class="field"><span>Artista</span><input id="fArtist" type="text" autocomplete="off"></label>
+    </div>
+    <p id="fErr" class="ferr" hidden></p>
+    <div class="dlg-actions">
+      <button id="fDelete" class="btn danger ghost" type="button" hidden>Excluir música</button>
+      <span class="sp"></span>
+      <button class="btn ghost" type="button" data-close>Cancelar</button>
+      <button id="fSave" class="btn primary" type="submit" value="save">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ DIALOG: SINCRONIZAÇÃO ============ -->
+<dialog id="syncDialog">
+  <div class="dlg-body">
+    <h2>Biblioteca no PC e no tablet</h2>
+    <div id="syncOff">
+      <p>Tudo já fica salvo neste aparelho. Para ter a <b>mesma biblioteca no PC e no tablet</b>, conecte sua conta do GitHub: as músicas ficam guardadas num Gist <b>privado</b> seu, e cada aparelho conectado se atualiza sozinho.</p>
+      <ol class="steps">
+        <li>Abra <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=English%20Music%20Lab" target="_blank" rel="noopener">github.com/settings/tokens/new</a> (token <i>classic</i>; o link já marca só a permissão <b>gist</b>).</li>
+        <li>Em <i>Expiration</i>, escolha <b>No expiration</b> (ou a validade que preferir) e clique em <b>Generate token</b>.</li>
+        <li>Copie o token (começa com <code>ghp_</code>) e cole abaixo. Faça o mesmo no outro aparelho, com o mesmo token.</li>
+      </ol>
+      <label class="field"><span>Token do GitHub</span><input id="tokenIn" type="password" autocomplete="off" placeholder="ghp_…" spellcheck="false"></label>
+      <p class="hint">O token fica guardado só neste navegador e só dá acesso aos seus Gists.</p>
+    </div>
+    <div id="syncOn" hidden>
+      <p id="syncState" class="sync-state"></p>
+      <p class="hint">A sincronização acontece sozinha ao abrir o site, ao voltar para a aba e alguns segundos depois de cada mudança.</p>
+    </div>
+    <p id="syncErr" class="ferr" hidden></p>
+    <div class="dlg-actions">
+      <button id="syncDisconnect" class="btn ghost danger" type="button" hidden>Desconectar este aparelho</button>
+      <span class="sp"></span>
+      <button class="btn ghost" type="button" data-close>Fechar</button>
+      <button id="syncConnect" class="btn primary" type="button">Conectar</button>
+      <button id="syncNow" class="btn primary" type="button" hidden>Sincronizar agora</button>
+    </div>
+    <hr>
+    <h3>Cópia de segurança</h3>
+    <p class="hint">Um arquivo com todas as músicas e ajustes, para guardar ou levar a outro navegador.</p>
+    <div class="row wrap">
+      <button id="exportBtn" class="btn ghost" type="button">Exportar backup</button>
+      <label class="btn ghost filebtn">Importar backup<input id="importIn" type="file" accept=".json,application/json"></label>
+    </div>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js" defer></script>
+<script src="https://www.youtube.com/iframe_api" async></script>
+</body>
+</html>
