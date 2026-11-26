@@ -402,10 +402,19 @@ function cancelGap() {
   if (S.gapT) { clearTimeout(S.gapT); S.gapT = null; }
   if (S.gapTick) { clearInterval(S.gapTick); S.gapTick = null; }
 }
+/* fim do loop: o end_ms da frase; se a frase quase não tem duração no arquivo
+   (ex.: vocalizações com tempo zero), usa o início real da frase seguinte, também do arquivo */
+function loopEnd(i) {
+  const L = S.lines[i];
+  if (L.end - L.start >= 400) return L.end;
+  const nx = S.lines[i + 1];
+  if (nx) return Math.max(L.end, nx.start + adj(i + 1) - adj(i));
+  return S.durMs ? Math.max(L.end, S.durMs) : L.end + 1000;
+}
 function loopCheck(vms) {
   const L = S.loop;
   if (!L || S.gapT || !playing()) return;
-  if (lyricMs(L.b, vms) < S.lines[L.b].end) return;
+  if (lyricMs(L.b, vms) < loopEnd(L.b)) return;
   L.count++;
   const gap = (S.meta.gapS || 0) * 1000;
   if (gap > 0) {
